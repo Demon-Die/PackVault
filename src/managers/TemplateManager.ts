@@ -22,7 +22,7 @@ export class TemplateManager {
 
     const templatePath = path.join(vaultPaths.templates, templateName);
     if (!(await fs.pathExists(templatePath))) {
-      throw new Error(`Unknown template "${templateName}". Available templates: react-vite, nextjs, express-api, node-ts.`);
+      throw new Error(`Unknown template "${templateName}". Available templates: react-vite, react-vite-js, nextjs, express-api, node-ts.`);
     }
 
     const target = path.join(destination, projectName);

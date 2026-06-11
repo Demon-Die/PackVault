@@ -30,7 +30,7 @@ flowchart TD
 
 ### CLI Layer
 
-`src/cli/index.ts` owns command parsing, user-facing output, and exit codes. It creates the service graph and delegates work to managers.
+`src/cli/index.ts` owns command parsing, user-facing output, and exit codes. It creates the service graph and delegates work to managers. `src/cli/createWizard.ts` provides the offline Vite-style project wizard used by `packvault create`.
 
 ### Service Layer
 

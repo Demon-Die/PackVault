@@ -12,6 +12,7 @@ import { DoctorManager } from "../managers/DoctorManager.js";
 import { PeerManager } from "../managers/PeerManager.js";
 import { LocalRegistryServer } from "../server/LocalRegistryServer.js";
 import { formatBytes, titleCase } from "../utils/format.js";
+import { isKnownTemplate, knownTemplates, normalizeTemplateName, runCreateWizard } from "./createWizard.js";
 
 async function createServices(): Promise<{
   database: PackVaultDatabase;
@@ -88,20 +89,27 @@ program
 
 program
   .command("create")
-  .argument("<template>", "template name: react-vite, react-app, nextjs, express-api, node-ts")
-  .argument("[project-name]", "project directory name")
-  .description("Create a new project from an offline template.")
-  .action(async (template: string, projectName?: string) => {
+  .argument("[target]", "project name or template name")
+  .argument("[project-name]", "project directory name when the first argument is a template")
+  .description("Create a new project from an offline Vite-style wizard or template.")
+  .action(async (target?: string, projectName?: string) => {
     const services = await createServices();
-    const resolvedTemplate = template === "react-app" ? "react-vite" : template;
-    const resolvedProject = projectName ?? template;
-    const spinner = ora(`Creating ${resolvedProject} from ${resolvedTemplate}`).start();
+    let spinner: ReturnType<typeof ora> | undefined;
 
     try {
-      const target = await services.templates.create(resolvedTemplate, resolvedProject);
-      spinner.succeed(`Created ${target}`);
+      const selection = await resolveCreateSelection(target, projectName);
+      const resolvedTemplate = normalizeTemplateName(selection.templateName);
+      const resolvedProject = selection.projectName;
+      spinner = ora(`Creating ${resolvedProject} from ${resolvedTemplate}`).start();
+      const createdPath = await services.templates.create(resolvedTemplate, resolvedProject);
+      spinner.succeed(`Created ${createdPath}`);
     } catch (error) {
-      spinner.fail(error instanceof Error ? error.message : String(error));
+      const message = error instanceof Error ? error.message : String(error);
+      if (spinner) {
+        spinner.fail(message);
+      } else {
+        console.error(chalk.red(message));
+      }
       process.exitCode = 1;
     } finally {
       services.database.close();
@@ -198,3 +206,25 @@ program.parseAsync(process.argv).catch((error: unknown) => {
   console.error(chalk.red(error instanceof Error ? error.message : String(error)));
   process.exitCode = 1;
 });
+
+async function resolveCreateSelection(
+  target?: string,
+  projectName?: string
+): Promise<{ templateName: string; projectName: string }> {
+  if (!target) {
+    return runCreateWizard();
+  }
+
+  if (isKnownTemplate(target)) {
+    return {
+      templateName: target,
+      projectName: projectName ?? target
+    };
+  }
+
+  if (projectName) {
+    throw new Error(`Unknown template "${target}". Available templates: ${knownTemplates().join(", ")}.`);
+  }
+
+  return runCreateWizard(target);
+}

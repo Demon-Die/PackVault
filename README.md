@@ -36,6 +36,44 @@ npm link
 
 ## Basic Workflow
 
+Create an offline starter app with a Vite-style wizard:
+
+```bash
+packvault create
+```
+
+Example wizard:
+
+```text
+Project name (my-packvault-app):
+Select a framework
+  1. React
+  2. Next.js
+  3. Express API
+  4. Node.js
+Choose a number: 1
+Select a variant
+  1. TypeScript + Vite
+  2. JavaScript + Vite
+Choose a number: 1
+```
+
+You can also pass the project name first:
+
+```bash
+packvault create my-app
+```
+
+Or skip the wizard by choosing a template directly:
+
+```bash
+packvault create react-vite my-app
+packvault create react-vite-js my-js-app
+packvault create nextjs web-app
+packvault create express-api api-server
+packvault create node-ts worker
+```
+
 Cache packages once while online:
 
 ```bash
@@ -122,6 +160,7 @@ Creates a project from a local template and replaces `__PROJECT_NAME__` tokens.
 Available templates:
 
 - `react-vite`
+- `react-vite-js`
 - `react-app` alias for `react-vite`
 - `nextjs`
 - `express-api`
