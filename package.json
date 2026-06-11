@@ -3,6 +3,17 @@
   "version": "0.1.0",
   "description": "Offline-first package caching and distribution CLI for JavaScript developers.",
   "type": "module",
+  "homepage": "https://github.com/Demon-Die/PackVault#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Demon-Die/PackVault.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Demon-Die/PackVault/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "bin": {
     "packvault": "./dist/cli/index.js"
   },
