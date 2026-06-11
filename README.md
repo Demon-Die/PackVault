@@ -144,8 +144,8 @@ CREATE TABLE peers (
 
 ## Architecture
 
-See [docs/ARCHITECTURE.md](/Users/rishibhardwaj/Documents/New%20project%205/docs/ARCHITECTURE.md).
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Roadmap
 
-See [docs/ROADMAP.md](/Users/rishibhardwaj/Documents/New%20project%205/docs/ROADMAP.md).
+See [docs/ROADMAP.md](docs/ROADMAP.md).
