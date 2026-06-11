@@ -12,7 +12,7 @@ import { DoctorManager } from "../managers/DoctorManager.js";
 import { PeerManager } from "../managers/PeerManager.js";
 import { LocalRegistryServer } from "../server/LocalRegistryServer.js";
 import { formatBytes, titleCase } from "../utils/format.js";
-import { isKnownTemplate, knownTemplates, normalizeTemplateName, runCreateWizard } from "./createWizard.js";
+import { isKnownFramework, isKnownTemplate, knownTemplates, normalizeTemplateName, runCreateWizard } from "./createWizard.js";
 
 async function createServices(): Promise<{
   database: PackVaultDatabase;
@@ -220,6 +220,10 @@ async function resolveCreateSelection(
       templateName: target,
       projectName: projectName ?? target
     };
+  }
+
+  if (isKnownFramework(target)) {
+    return runCreateWizard(projectName ?? `my-${target}-app`, target);
   }
 
   if (projectName) {

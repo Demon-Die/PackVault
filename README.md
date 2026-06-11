@@ -64,6 +64,13 @@ You can also pass the project name first:
 packvault create my-app
 ```
 
+Or start directly with a framework:
+
+```bash
+packvault create react
+packvault create react my-react-app
+```
+
 Or skip the wizard by choosing a template directly:
 
 ```bash

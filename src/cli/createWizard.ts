@@ -7,12 +7,14 @@ export interface TemplateChoice {
 }
 
 interface FrameworkChoice {
+  id: string;
   label: string;
   variants: TemplateChoice[];
 }
 
 const frameworks: FrameworkChoice[] = [
   {
+    id: "react",
     label: "React",
     variants: [
       { label: "TypeScript + Vite", value: "react-vite" },
@@ -20,14 +22,17 @@ const frameworks: FrameworkChoice[] = [
     ]
   },
   {
+    id: "next",
     label: "Next.js",
     variants: [{ label: "TypeScript", value: "nextjs" }]
   },
   {
+    id: "express",
     label: "Express API",
     variants: [{ label: "TypeScript", value: "express-api" }]
   },
   {
+    id: "node",
     label: "Node.js",
     variants: [{ label: "TypeScript", value: "node-ts" }]
   }
@@ -38,7 +43,10 @@ export interface CreateWizardResult {
   templateName: string;
 }
 
-export async function runCreateWizard(defaultProjectName?: string): Promise<CreateWizardResult> {
+export async function runCreateWizard(
+  defaultProjectName?: string,
+  preferredFrameworkId?: string
+): Promise<CreateWizardResult> {
   if (!process.stdin.isTTY) {
     throw new Error("Interactive create requires a terminal. Use packvault create <template> <project-name> instead.");
   }
@@ -50,7 +58,8 @@ export async function runCreateWizard(defaultProjectName?: string): Promise<Crea
     console.log("");
 
     const projectName = await promptText(reader, "Project name", defaultProjectName ?? "my-packvault-app");
-    const framework = await promptSelect(reader, "Select a framework", frameworks);
+    const framework = findFramework(preferredFrameworkId)
+      ?? await promptSelect(reader, "Select a framework", frameworks);
     const variant = framework.variants.length === 1
       ? framework.variants[0]
       : await promptSelect(reader, "Select a variant", framework.variants);
@@ -64,6 +73,10 @@ export async function runCreateWizard(defaultProjectName?: string): Promise<Crea
   }
 }
 
+export function isKnownFramework(value: string): boolean {
+  return Boolean(findFramework(value));
+}
+
 export function isKnownTemplate(value: string): boolean {
   return knownTemplates().includes(value);
 }
@@ -74,6 +87,14 @@ export function normalizeTemplateName(value: string): string {
 
 export function knownTemplates(): string[] {
   return ["react-vite", "react-vite-js", "react-app", "nextjs", "express-api", "node-ts"];
+}
+
+function findFramework(value?: string): FrameworkChoice | undefined {
+  if (!value) {
+    return undefined;
+  }
+
+  return frameworks.find((framework) => framework.id === value || framework.label.toLowerCase() === value);
 }
 
 async function promptText(
