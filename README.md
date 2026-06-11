@@ -48,9 +48,21 @@ Example wizard:
 Project name (my-packvault-app):
 Select a framework
   1. React
-  2. Next.js
-  3. Express API
-  4. Node.js
+  2. Vue
+  3. Svelte
+  4. Solid
+  5. Preact
+  6. Qwik
+  7. Angular
+  8. Next.js
+  9. Nuxt
+  10. SvelteKit
+  11. Astro
+  12. Remix
+  13. Express API
+  14. Fastify API
+  15. NestJS API
+  16. Node.js
 Choose a number: 1
 Select a variant
   1. TypeScript + Vite
@@ -69,6 +81,11 @@ Or start directly with a framework:
 ```bash
 packvault create react
 packvault create react my-react-app
+packvault create vue my-vue-app
+packvault create svelte my-svelte-app
+packvault create next web-app
+packvault create astro docs-site
+packvault create fastify api-server
 ```
 
 Or skip the wizard by choosing a template directly:
@@ -76,8 +93,20 @@ Or skip the wizard by choosing a template directly:
 ```bash
 packvault create react-vite my-app
 packvault create react-vite-js my-js-app
+packvault create vue-vite vue-app
+packvault create svelte-vite svelte-app
+packvault create solid-vite solid-app
+packvault create preact-vite preact-app
+packvault create qwik qwik-app
+packvault create angular angular-app
 packvault create nextjs web-app
+packvault create nuxt nuxt-app
+packvault create sveltekit sveltekit-app
+packvault create astro astro-site
+packvault create remix remix-app
 packvault create express-api api-server
+packvault create fastify-api fast-api
+packvault create nest-api nest-api
 packvault create node-ts worker
 ```
 
@@ -99,6 +128,7 @@ Cache a full bundle while online:
 
 ```bash
 packvault bundle frontend
+packvault bundle frameworks
 ```
 
 Then install cached packages offline:
@@ -169,8 +199,24 @@ Available templates:
 - `react-vite`
 - `react-vite-js`
 - `react-app` alias for `react-vite`
+- `vue-vite`
+- `vue-vite-js`
+- `svelte-vite`
+- `svelte-vite-js`
+- `solid-vite`
+- `solid-vite-js`
+- `preact-vite`
+- `preact-vite-js`
+- `qwik`
+- `angular`
 - `nextjs`
+- `nuxt`
+- `sveltekit`
+- `astro`
+- `remix`
 - `express-api`
+- `fastify-api`
+- `nest-api`
 - `node-ts`
 
 ### `packvault doctor`
@@ -193,9 +239,10 @@ Vault Health: 80%
 
 Syncs a predefined bundle.
 
-- `frontend`: react, vite, tailwindcss, eslint, prettier
+- `frontend`: react, react-dom, vite, tailwindcss, eslint, prettier
 - `backend`: express, prisma, dotenv
 - `fullstack`: react, vite, express, prisma
+- `frameworks`: popular frontend, meta-framework, and API framework packages
 
 ### `packvault serve`
 

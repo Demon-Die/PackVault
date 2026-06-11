@@ -1,4 +1,4 @@
 {
   "name": "frontend",
-  "packages": ["react", "vite", "tailwindcss", "eslint", "prettier"]
+  "packages": ["react", "react-dom", "vite", "tailwindcss", "eslint", "prettier"]
 }

@@ -22,14 +22,86 @@ const frameworks: FrameworkChoice[] = [
     ]
   },
   {
+    id: "vue",
+    label: "Vue",
+    variants: [
+      { label: "TypeScript + Vite", value: "vue-vite" },
+      { label: "JavaScript + Vite", value: "vue-vite-js" }
+    ]
+  },
+  {
+    id: "svelte",
+    label: "Svelte",
+    variants: [
+      { label: "TypeScript + Vite", value: "svelte-vite" },
+      { label: "JavaScript + Vite", value: "svelte-vite-js" }
+    ]
+  },
+  {
+    id: "solid",
+    label: "Solid",
+    variants: [
+      { label: "TypeScript + Vite", value: "solid-vite" },
+      { label: "JavaScript + Vite", value: "solid-vite-js" }
+    ]
+  },
+  {
+    id: "preact",
+    label: "Preact",
+    variants: [
+      { label: "TypeScript + Vite", value: "preact-vite" },
+      { label: "JavaScript + Vite", value: "preact-vite-js" }
+    ]
+  },
+  {
+    id: "qwik",
+    label: "Qwik",
+    variants: [{ label: "TypeScript", value: "qwik" }]
+  },
+  {
+    id: "angular",
+    label: "Angular",
+    variants: [{ label: "TypeScript", value: "angular" }]
+  },
+  {
     id: "next",
     label: "Next.js",
     variants: [{ label: "TypeScript", value: "nextjs" }]
   },
   {
+    id: "nuxt",
+    label: "Nuxt",
+    variants: [{ label: "TypeScript", value: "nuxt" }]
+  },
+  {
+    id: "sveltekit",
+    label: "SvelteKit",
+    variants: [{ label: "TypeScript", value: "sveltekit" }]
+  },
+  {
+    id: "astro",
+    label: "Astro",
+    variants: [{ label: "TypeScript", value: "astro" }]
+  },
+  {
+    id: "remix",
+    label: "Remix",
+    variants: [{ label: "TypeScript", value: "remix" }]
+  },
+  {
     id: "express",
     label: "Express API",
     variants: [{ label: "TypeScript", value: "express-api" }]
+  },
+  {
+    id: "fastify",
+    label: "Fastify API",
+    variants: [{ label: "TypeScript", value: "fastify-api" }]
+  },
+  {
+    id: "nest",
+    label: "NestJS API",
+    variants: [{ label: "TypeScript", value: "nest-api" }]
   },
   {
     id: "node",
@@ -86,7 +158,30 @@ export function normalizeTemplateName(value: string): string {
 }
 
 export function knownTemplates(): string[] {
-  return ["react-vite", "react-vite-js", "react-app", "nextjs", "express-api", "node-ts"];
+  return [
+    "react-vite",
+    "react-vite-js",
+    "react-app",
+    "vue-vite",
+    "vue-vite-js",
+    "svelte-vite",
+    "svelte-vite-js",
+    "solid-vite",
+    "solid-vite-js",
+    "preact-vite",
+    "preact-vite-js",
+    "qwik",
+    "angular",
+    "nextjs",
+    "nuxt",
+    "sveltekit",
+    "astro",
+    "remix",
+    "express-api",
+    "fastify-api",
+    "nest-api",
+    "node-ts"
+  ];
 }
 
 function findFramework(value?: string): FrameworkChoice | undefined {

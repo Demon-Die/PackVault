@@ -1,0 +1,25 @@
+{
+  "name": "frameworks",
+  "packages": [
+    "react",
+    "react-dom",
+    "vue",
+    "svelte",
+    "solid-js",
+    "preact",
+    "@builder.io/qwik",
+    "@builder.io/qwik-city",
+    "@angular/core",
+    "@angular/cli",
+    "next",
+    "nuxt",
+    "@sveltejs/kit",
+    "astro",
+    "@remix-run/react",
+    "express",
+    "fastify",
+    "@nestjs/core",
+    "vite",
+    "typescript"
+  ]
+}

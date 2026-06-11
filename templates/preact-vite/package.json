@@ -1,0 +1,18 @@
+{
+  "name": "__PROJECT_NAME__",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@preact/preset-vite": "latest",
+    "vite": "latest",
+    "typescript": "latest",
+    "preact": "latest"
+  },
+  "devDependencies": {}
+}
