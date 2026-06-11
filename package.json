@@ -1,0 +1,50 @@
+{
+  "name": "packvault",
+  "version": "0.1.0",
+  "description": "Offline-first package caching and distribution CLI for JavaScript developers.",
+  "type": "module",
+  "bin": {
+    "packvault": "./dist/cli/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/cli/index.ts",
+    "start": "node dist/cli/index.js",
+    "lint": "eslint . --ext .ts",
+    "test": "vitest run"
+  },
+  "keywords": [
+    "npm",
+    "offline",
+    "cache",
+    "registry",
+    "cli"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.7.9",
+    "chalk": "^5.3.0",
+    "commander": "^12.1.0",
+    "express": "^4.21.2",
+    "fs-extra": "^11.2.0",
+    "ora": "^8.1.1",
+    "progress": "^2.0.3",
+    "tar": "^7.4.3",
+    "sql.js": "^1.12.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/fs-extra": "^11.0.4",
+    "@types/node": "^22.10.2",
+    "@types/progress": "^2.0.7",
+    "@types/sql.js": "^1.4.9",
+    "eslint": "^9.17.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^4.1.8"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

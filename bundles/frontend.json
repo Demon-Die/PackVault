@@ -1,0 +1,4 @@
+{
+  "name": "frontend",
+  "packages": ["react", "vite", "tailwindcss", "eslint", "prettier"]
+}

@@ -1,0 +1,4 @@
+{
+  "name": "fullstack",
+  "packages": ["react", "vite", "express", "prisma"]
+}
