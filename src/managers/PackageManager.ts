@@ -2,8 +2,8 @@ import path from "node:path";
 import fs from "fs-extra";
 import ProgressBar from "progress";
 import * as tar from "tar";
-import { vaultPaths } from "../config/paths.js";
-import type { SyncResult } from "../types/index.js";
+import semver from "semver";
+import type { CachedPackage, InstallResult, SyncResult } from "../types/index.js";
 import { PackVaultDatabase } from "../db/database.js";
 import { CacheManager } from "./CacheManager.js";
 import { RegistryManager } from "./RegistryManager.js";
@@ -15,28 +15,51 @@ export class PackageManager {
     private readonly cache: CacheManager
   ) {}
 
-  async sync(packages: string[]): Promise<SyncResult[]> {
+  async sync(packages: string[], options: { dependencies?: boolean } = {}): Promise<SyncResult[]> {
     const progress = new ProgressBar("syncing [:bar] :current/:total :token", {
       total: packages.length,
       width: 28
     });
 
     const results: SyncResult[] = [];
+    const queue = packages.map((packageSpec) => this.parsePackageSpec(packageSpec));
+    const visited = new Set<string>();
 
-    for (const packageSpec of packages) {
-      const { name, version } = this.parsePackageSpec(packageSpec);
+    while (queue.length > 0) {
+      const { name, version } = queue.shift()!;
+      const visitKey = `${name}@${version}`;
+      if (visited.has(visitKey)) {
+        progress.tick({ token: name });
+        continue;
+      }
+
+      visited.add(visitKey);
       progress.tick(0, { token: name });
 
       const metadata = await this.registry.resolveVersion(name, version);
+      const exactKey = `${metadata.name}@${metadata.version}`;
+      if (visited.has(exactKey) && exactKey !== visitKey) {
+        progress.tick({ token: name });
+        continue;
+      }
+
+      visited.add(exactKey);
       const stream = await this.registry.downloadTarball(metadata.dist.tarball);
       const cached = await this.cache.writeTarball(metadata, stream);
+      const dependencies = options.dependencies === false ? [] : Object.entries(cached.dependencies);
+
+      progress.total += dependencies.length;
+      for (const [dependencyName, dependencyRange] of dependencies) {
+        queue.push({ name: dependencyName, version: dependencyRange });
+      }
 
       await this.database.upsertPackage(cached);
       results.push({
         name: cached.name,
         version: cached.version,
         cachePath: cached.cachePath,
-        size: cached.size
+        size: cached.size,
+        dependencyCount: dependencies.length
       });
 
       progress.tick({ token: name });
@@ -45,7 +68,7 @@ export class PackageManager {
     return results;
   }
 
-  async install(name: string, targetProject = process.cwd(), version?: string): Promise<string> {
+  async install(name: string, targetProject = process.cwd(), version?: string): Promise<InstallResult> {
     const cached = this.database.findPackage(name, version);
 
     if (!cached) {
@@ -56,17 +79,12 @@ export class PackageManager {
       throw new Error(`Cached metadata exists for ${name}, but the tarball is missing at ${cached.cachePath}.`);
     }
 
-    const packageRoot = path.join(targetProject, "node_modules", name);
-    await fs.remove(packageRoot);
-    await fs.ensureDir(packageRoot);
+    const installed = await this.installPackageTree(cached, targetProject, new Set());
 
-    await tar.x({
-      file: cached.cachePath,
-      cwd: packageRoot,
-      strip: 1
-    });
-
-    return packageRoot;
+    return {
+      installed,
+      rootPath: path.join(targetProject, "node_modules", name)
+    };
   }
 
   async syncBundle(bundleName: string): Promise<SyncResult[]> {
@@ -90,5 +108,68 @@ export class PackageManager {
 
     const [name, version = "latest"] = spec.split("@");
     return { name, version };
+  }
+
+  private async installPackageTree(
+    cached: CachedPackage,
+    targetProject: string,
+    installed: Set<string>
+  ): Promise<string[]> {
+    const installKey = `${cached.name}@${cached.version}`;
+    if (installed.has(installKey)) {
+      return [];
+    }
+
+    installed.add(installKey);
+    await this.extractCachedPackage(cached, targetProject);
+
+    const installedNames = [installKey];
+
+    for (const [dependencyName, dependencyRange] of Object.entries(cached.dependencies)) {
+      const dependency = this.findCachedDependency(dependencyName, dependencyRange);
+
+      if (!dependency) {
+        throw new Error(
+          `${cached.name}@${cached.version} depends on ${dependencyName}@${dependencyRange}, but it is not cached. Run packvault sync ${cached.name} while online.`
+        );
+      }
+
+      installedNames.push(...await this.installPackageTree(dependency, targetProject, installed));
+    }
+
+    return installedNames;
+  }
+
+  private async extractCachedPackage(cached: CachedPackage, targetProject: string): Promise<void> {
+    if (!(await this.cache.hasTarball(cached))) {
+      throw new Error(`Cached metadata exists for ${cached.name}, but the tarball is missing at ${cached.cachePath}.`);
+    }
+
+    const packageRoot = path.join(targetProject, "node_modules", cached.name);
+    await fs.remove(packageRoot);
+    await fs.ensureDir(packageRoot);
+
+    await tar.x({
+      file: cached.cachePath,
+      cwd: packageRoot,
+      strip: 1
+    });
+  }
+
+  private findCachedDependency(name: string, range: string): CachedPackage | undefined {
+    const candidates = this.database.listPackages().filter((pkg) => pkg.name === name);
+    const exact = candidates.find((pkg) => pkg.version === range);
+    if (exact) {
+      return exact;
+    }
+
+    const satisfyingVersion = semver.maxSatisfying(
+      candidates.map((pkg) => pkg.version).filter((version) => semver.valid(version)),
+      range
+    );
+
+    return satisfyingVersion
+      ? candidates.find((pkg) => pkg.version === satisfyingVersion)
+      : candidates.at(-1);
   }
 }

@@ -34,6 +34,33 @@ npm run build
 npm link
 ```
 
+## Quick Start
+
+```bash
+npm install -g packvault
+packvault bundle frontend
+packvault create react my-app --install
+cd my-app
+```
+
+To prepare broad framework support before going offline:
+
+```bash
+packvault bundle frameworks
+```
+
+To share your cached packages on the same Wi-Fi/LAN:
+
+```bash
+packvault share
+```
+
+Another machine can import your cached packages:
+
+```bash
+packvault connect <your-ip>
+```
+
 ## Basic Workflow
 
 Create an offline starter app with a Vite-style wizard:
@@ -116,6 +143,8 @@ Cache packages once while online:
 packvault sync react vite tailwindcss
 ```
 
+`sync` also caches runtime dependencies by default. Use `--no-dependencies` to cache only the requested package tarballs.
+
 Install later without internet:
 
 ```bash
@@ -142,6 +171,12 @@ Check what is available offline:
 
 ```bash
 packvault doctor
+```
+
+Create and install cached template dependencies in one step:
+
+```bash
+packvault create react my-app --install
 ```
 
 ## Usage Examples
@@ -184,7 +219,7 @@ packvault sync react vite@latest express@4.18.3
 
 ### `packvault install <package>`
 
-Installs a cached package into the current project's `node_modules` by extracting the cached tarball. This command does not require internet access.
+Installs a cached package and its cached runtime dependency tree into the current project's `node_modules`. This command does not require internet access.
 
 ```bash
 packvault install react
@@ -194,6 +229,8 @@ packvault install express --version 4.18.3
 ### `packvault create <template> [project-name]`
 
 Creates a project from a local template and replaces `__PROJECT_NAME__` tokens.
+
+Use `--install` to install cached dependencies from the generated template's `package.json`.
 
 Available templates:
 
@@ -267,6 +304,12 @@ On another machine connected to the same LAN:
 
 ```bash
 packvault connect <your-ip>
+```
+
+You can also point npm at the PackVault server for cached package metadata:
+
+```bash
+npm install react --registry http://localhost:4873
 ```
 
 ### `packvault connect <ip>`

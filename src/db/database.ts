@@ -17,6 +17,7 @@ export class PackVaultDatabase {
       ? new this.sql.Database(await fs.readFile(this.databasePath))
       : new this.sql.Database();
     this.db.exec(schema);
+    this.migratePackagesTable();
     await this.persist();
   }
 
@@ -26,13 +27,25 @@ export class PackVaultDatabase {
 
   async upsertPackage(pkg: CachedPackage): Promise<void> {
     this.connection.run(
-      `INSERT INTO packages (name, version, size, cache_path, created_at)
-       VALUES (?, ?, ?, ?, ?)
+      `INSERT INTO packages (name, version, size, cache_path, dependencies, dist_tarball, integrity, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
        ON CONFLICT(name, version) DO UPDATE SET
          size = excluded.size,
          cache_path = excluded.cache_path,
+         dependencies = excluded.dependencies,
+         dist_tarball = excluded.dist_tarball,
+         integrity = excluded.integrity,
          created_at = excluded.created_at`,
-      [pkg.name, pkg.version, pkg.size, pkg.cachePath, pkg.createdAt]
+      [
+        pkg.name,
+        pkg.version,
+        pkg.size,
+        pkg.cachePath,
+        JSON.stringify(pkg.dependencies),
+        pkg.distTarball ?? null,
+        pkg.integrity ?? null,
+        pkg.createdAt
+      ]
     );
     await this.persist();
   }
@@ -107,6 +120,25 @@ export class PackVaultDatabase {
     await fs.writeFile(this.databasePath, Buffer.from(this.db.export()));
   }
 
+  private migratePackagesTable(): void {
+    const columns = new Set(
+      this.rows<{ name: string }>(this.connection.exec("PRAGMA table_info(packages)"))
+        .map((column) => column.name)
+    );
+
+    if (!columns.has("dependencies")) {
+      this.connection.run("ALTER TABLE packages ADD COLUMN dependencies TEXT NOT NULL DEFAULT '{}'");
+    }
+
+    if (!columns.has("dist_tarball")) {
+      this.connection.run("ALTER TABLE packages ADD COLUMN dist_tarball TEXT");
+    }
+
+    if (!columns.has("integrity")) {
+      this.connection.run("ALTER TABLE packages ADD COLUMN integrity TEXT");
+    }
+  }
+
   private rows<T>(results: QueryExecResult[]): T[] {
     const [result] = results;
     if (!result) {
@@ -128,7 +160,10 @@ export class PackVaultDatabase {
       version: row.version,
       size: row.size,
       cachePath: row.cache_path,
-      createdAt: row.created_at
+      createdAt: row.created_at,
+      dependencies: row.dependencies ? JSON.parse(row.dependencies) as Record<string, string> : {},
+      distTarball: row.dist_tarball,
+      integrity: row.integrity
     };
   }
 }

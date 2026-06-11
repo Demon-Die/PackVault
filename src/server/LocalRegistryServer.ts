@@ -1,7 +1,9 @@
 import express from "express";
 import fs from "fs-extra";
+import semver from "semver";
 import { PackVaultDatabase } from "../db/database.js";
 import { getLanAddresses } from "../utils/network.js";
+import type { CachedPackage } from "../types/index.js";
 
 export class LocalRegistryServer {
   constructor(private readonly database: PackVaultDatabase) {}
@@ -38,35 +40,12 @@ export class LocalRegistryServer {
       }
     });
 
+    app.get(/^\/(@[^/]+)\/([^/]+)$/, (request, response) => {
+      this.sendPackageMetadata(`${request.params[0]}/${request.params[1]}`, request, response);
+    });
+
     app.get("/:name", (request, response) => {
-      const name = request.params.name;
-      const packages = this.database.listPackages().filter((pkg) => pkg.name === name);
-
-      if (packages.length === 0) {
-        response.status(404).json({ error: `${name} is not cached.` });
-        return;
-      }
-
-      const versions = Object.fromEntries(
-        packages.map((pkg) => [
-          pkg.version,
-          {
-            name: pkg.name,
-            version: pkg.version,
-            dist: {
-              tarball: `${request.protocol}://${request.get("host")}/-/packvault/tarball?name=${encodeURIComponent(pkg.name)}&version=${encodeURIComponent(pkg.version)}`
-            }
-          }
-        ])
-      );
-
-      response.json({
-        name,
-        "dist-tags": {
-          latest: packages.at(-1)?.version
-        },
-        versions
-      });
+      this.sendPackageMetadata(request.params.name, request, response);
     });
 
     app.listen(port, "0.0.0.0", () => {
@@ -76,5 +55,48 @@ export class LocalRegistryServer {
         console.log(`LAN: http://${address}:${port}`);
       }
     });
+  }
+
+  private sendPackageMetadata(
+    name: string,
+    request: express.Request,
+    response: express.Response
+  ): void {
+    const packages = this.database
+      .listPackages()
+      .filter((pkg) => pkg.name === name)
+      .sort((a, b) => semver.compare(a.version, b.version));
+
+    if (packages.length === 0) {
+      response.status(404).json({ error: `${name} is not cached.` });
+      return;
+    }
+
+    const versions = Object.fromEntries(
+      packages.map((pkg) => [
+        pkg.version,
+        this.toNpmVersionMetadata(pkg, request)
+      ])
+    );
+
+    response.json({
+      name,
+      "dist-tags": {
+        latest: packages.at(-1)?.version
+      },
+      versions
+    });
+  }
+
+  private toNpmVersionMetadata(pkg: CachedPackage, request: express.Request): Record<string, unknown> {
+    return {
+      name: pkg.name,
+      version: pkg.version,
+      dependencies: pkg.dependencies,
+      dist: {
+        tarball: `${request.protocol}://${request.get("host")}/-/packvault/tarball?name=${encodeURIComponent(pkg.name)}&version=${encodeURIComponent(pkg.version)}`,
+        integrity: pkg.integrity
+      }
+    };
   }
 }

@@ -4,6 +4,9 @@ CREATE TABLE IF NOT EXISTS packages (
   version TEXT NOT NULL,
   size INTEGER NOT NULL,
   cache_path TEXT NOT NULL,
+  dependencies TEXT NOT NULL DEFAULT '{}',
+  dist_tarball TEXT,
+  integrity TEXT,
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (name, version)
 );

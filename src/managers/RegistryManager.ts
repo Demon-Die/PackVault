@@ -1,4 +1,5 @@
 import axios, { type AxiosInstance } from "axios";
+import semver from "semver";
 import type { NpmPackageMetadata, NpmVersionMetadata } from "../types/index.js";
 
 export class RegistryManager {
@@ -21,10 +22,7 @@ export class RegistryManager {
 
   async resolveVersion(name: string, requestedVersion = "latest"): Promise<NpmVersionMetadata> {
     const metadata = await this.getPackageMetadata(name);
-    const version =
-      requestedVersion === "latest"
-        ? metadata["dist-tags"].latest
-        : requestedVersion;
+    const version = this.resolveVersionFromMetadata(metadata, requestedVersion);
 
     const versionMetadata = metadata.versions[version];
 
@@ -33,6 +31,26 @@ export class RegistryManager {
     }
 
     return versionMetadata;
+  }
+
+  private resolveVersionFromMetadata(metadata: NpmPackageMetadata, requestedVersion: string): string {
+    const taggedVersion = metadata["dist-tags"][requestedVersion];
+    if (taggedVersion) {
+      return taggedVersion;
+    }
+
+    if (metadata.versions[requestedVersion]) {
+      return requestedVersion;
+    }
+
+    const versions = Object.keys(metadata.versions).filter((version) => semver.valid(version));
+    const maxSatisfying = semver.maxSatisfying(versions, requestedVersion);
+
+    if (!maxSatisfying) {
+      throw new Error(`No version of ${metadata.name} satisfies "${requestedVersion}".`);
+    }
+
+    return maxSatisfying;
   }
 
   async downloadTarball(tarballUrl: string): Promise<NodeJS.ReadableStream> {

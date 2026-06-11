@@ -4,6 +4,9 @@ export interface CachedPackage {
   size: number;
   cachePath: string;
   createdAt: string;
+  dependencies: Record<string, string>;
+  distTarball?: string;
+  integrity?: string;
 }
 
 export interface PackageRecord {
@@ -12,6 +15,9 @@ export interface PackageRecord {
   size: number;
   cache_path: string;
   created_at: string;
+  dependencies?: string;
+  dist_tarball?: string;
+  integrity?: string;
 }
 
 export interface BundleDefinition {
@@ -43,6 +49,7 @@ export interface NpmPackageMetadata {
   name: string;
   "dist-tags": Record<string, string>;
   versions: Record<string, NpmVersionMetadata>;
+  time?: Record<string, string>;
 }
 
 export interface SyncResult {
@@ -50,6 +57,12 @@ export interface SyncResult {
   version: string;
   cachePath: string;
   size: number;
+  dependencyCount: number;
+}
+
+export interface InstallResult {
+  installed: string[];
+  rootPath: string;
 }
 
 export interface DoctorReport {

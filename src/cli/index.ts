@@ -1,6 +1,8 @@
 #!/usr/bin/env node
+import path from "node:path";
 import { Command } from "commander";
 import chalk from "chalk";
+import fs from "fs-extra";
 import ora from "ora";
 import { PackVaultDatabase } from "../db/database.js";
 import { CacheManager } from "../managers/CacheManager.js";
@@ -49,18 +51,19 @@ const program = new Command();
 program
   .name("packvault")
   .description("Offline-first package caching and LAN distribution for JavaScript developers.")
-  .version("0.1.0");
+  .version("0.2.0");
 
 program
   .command("sync")
   .argument("<packages...>", "npm packages to download and cache")
+  .option("--no-dependencies", "cache only the requested package roots")
   .description("Download package metadata and tarballs into the local vault.")
-  .action(async (packages: string[]) => {
+  .action(async (packages: string[], options: { dependencies: boolean }) => {
     const services = await createServices();
     try {
-      const results = await services.packages.sync(packages);
+      const results = await services.packages.sync(packages, { dependencies: options.dependencies });
       for (const result of results) {
-        console.log(`${chalk.green("cached")} ${result.name}@${result.version} ${chalk.dim(formatBytes(result.size))}`);
+        console.log(`${chalk.green("cached")} ${result.name}@${result.version} ${chalk.dim(formatBytes(result.size))} ${chalk.dim(`${result.dependencyCount} deps`)}`);
       }
     } finally {
       services.database.close();
@@ -78,7 +81,7 @@ program
     const spinner = ora(`Installing ${packageName} from cache`).start();
     try {
       const target = await services.packages.install(packageName, options.directory, options.version);
-      spinner.succeed(`Installed ${packageName} into ${target}`);
+      spinner.succeed(`Installed ${target.installed.length} package${target.installed.length === 1 ? "" : "s"} into ${target.rootPath}`);
     } catch (error) {
       spinner.fail(error instanceof Error ? error.message : String(error));
       process.exitCode = 1;
@@ -91,8 +94,9 @@ program
   .command("create")
   .argument("[target]", "project name or template name")
   .argument("[project-name]", "project directory name when the first argument is a template")
+  .option("-i, --install", "install cached template dependencies after creating the project")
   .description("Create a new project from an offline Vite-style wizard or template.")
-  .action(async (target?: string, projectName?: string) => {
+  .action(async (target: string | undefined, projectName: string | undefined, options: { install?: boolean }) => {
     const services = await createServices();
     let spinner: ReturnType<typeof ora> | undefined;
 
@@ -103,6 +107,19 @@ program
       spinner = ora(`Creating ${resolvedProject} from ${resolvedTemplate}`).start();
       const createdPath = await services.templates.create(resolvedTemplate, resolvedProject);
       spinner.succeed(`Created ${createdPath}`);
+
+      if (options.install) {
+        const dependencies = await readTemplateDependencies(createdPath);
+        if (dependencies.length === 0) {
+          console.log(chalk.yellow("No dependencies found to install."));
+        } else {
+          spinner = ora(`Installing ${dependencies.length} cached template dependencies`).start();
+          for (const dependency of dependencies) {
+            await services.packages.install(dependency, createdPath);
+          }
+          spinner.succeed(`Installed cached dependencies into ${createdPath}`);
+        }
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       if (spinner) {
@@ -149,7 +166,7 @@ program
     try {
       const results = await services.packages.syncBundle(bundleName);
       for (const result of results) {
-        console.log(`${chalk.green("cached")} ${result.name}@${result.version}`);
+        console.log(`${chalk.green("cached")} ${result.name}@${result.version} ${chalk.dim(`${result.dependencyCount} deps`)}`);
       }
     } catch (error) {
       console.error(chalk.red(error instanceof Error ? error.message : String(error)));
@@ -243,4 +260,21 @@ async function resolveCreateSelection(
   }
 
   return runCreateWizard(target);
+}
+
+async function readTemplateDependencies(projectPath: string): Promise<string[]> {
+  const packageJsonPath = path.join(projectPath, "package.json");
+  if (!(await fs.pathExists(packageJsonPath))) {
+    return [];
+  }
+
+  const packageJson = await fs.readJson(packageJsonPath) as {
+    dependencies?: Record<string, string>;
+    devDependencies?: Record<string, string>;
+  };
+
+  return [
+    ...Object.keys(packageJson.dependencies ?? {}),
+    ...Object.keys(packageJson.devDependencies ?? {})
+  ];
 }

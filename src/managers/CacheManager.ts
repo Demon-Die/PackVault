@@ -16,7 +16,10 @@ export class CacheManager {
       version: metadata.version,
       size: stat.size,
       cachePath,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      dependencies: metadata.dependencies ?? {},
+      distTarball: metadata.dist.tarball,
+      integrity: metadata.dist.integrity
     };
   }
 
@@ -32,6 +35,7 @@ export class CacheManager {
     return {
       ...pkg,
       size: stat.size,
+      dependencies: pkg.dependencies ?? {},
       createdAt: new Date().toISOString()
     };
   }
