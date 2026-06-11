@@ -15,7 +15,7 @@
     "access": "public"
   },
   "bin": {
-    "packvault": "./dist/cli/index.js"
+    "packvault": "dist/cli/index.js"
   },
   "files": [
     "dist",
