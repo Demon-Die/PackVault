@@ -7,6 +7,8 @@ CREATE TABLE IF NOT EXISTS packages (
   dependencies TEXT NOT NULL DEFAULT '{}',
   dist_tarball TEXT,
   integrity TEXT,
+  shasum TEXT,
+  accessed_at TEXT,
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (name, version)
 );
@@ -20,6 +22,10 @@ CREATE TABLE IF NOT EXISTS peers (
   ip TEXT PRIMARY KEY,
   hostname TEXT NOT NULL,
   last_seen TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS schema_version (
+  version INTEGER PRIMARY KEY
 );
 
 CREATE INDEX IF NOT EXISTS idx_packages_name ON packages(name);

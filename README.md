@@ -5,12 +5,28 @@ PackVault is an offline-first package caching and distribution CLI for JavaScrip
 ## Features
 
 - Sync npm metadata and tarballs into `~/.packvault/cache`
-- Install cached packages into `node_modules` without internet access
+- Lockfile-aware sync (`--from-lockfile`) for npm, Yarn, and pnpm
+- SemVer-aware install from cached packages
+- SHA-512 / shasum integrity verification on sync and install
+- Transparent proxy registry (`serve`) with offline fallback
+- Per-project offline readiness report (`doctor --project`)
+- Parallel concurrent downloads with incremental skip
+- Custom user-defined bundles (save, list, delete)
+- Scheduled auto-sync daemon
+- Private registry and scoped registry support
+- Portable vault export / import
+- Shell auto-completion (bash, zsh, fish)
+- Audit log, vault search, and pruning
+- mDNS peer discovery and bidirectional peer sync
+- Peer authentication tokens
+- Web UI at `/ui` when serving
+- Offline vulnerability audit
+- Package allowlist / blocklist policy
+- Project snapshots and per-project config
+- Bundle diff and classroom/workshop mode
 - Create offline starter projects from local templates
-- Sync curated bundles for frontend, backend, and full-stack work
-- Run a local package registry server for LAN sharing
 - Connect to another PackVault node and import missing tarballs
-- Track package, bundle, and peer metadata in SQLite
+- Track package, bundle, peer, log, and advisory metadata in SQLite
 
 ## Install
 
@@ -141,16 +157,20 @@ Cache packages once while online:
 
 ```bash
 packvault sync react vite tailwindcss
+packvault sync --from-lockfile
+packvault sync --from-lockfile ./path/to/package-lock.json
+packvault sync --concurrency 10
+packvault sync my-private-pkg --registry https://npm.mycompany.com --token ghp_xxx
 ```
 
-`sync` also caches runtime dependencies by default. Use `--no-dependencies` to cache only the requested package tarballs.
+`sync` also caches runtime dependencies by default. Use `--no-dependencies` to cache only the requested package tarballs. With no arguments, `sync` reads `packages` from `packvault.config.js`.
 
 Install later without internet:
 
 ```bash
 packvault install react
+packvault install --from-package-json
 packvault install vite
-packvault install tailwindcss
 ```
 
 Cache a full bundle while online:
@@ -167,10 +187,12 @@ packvault install react
 packvault install vite
 ```
 
-Check what is available offline:
+Check vault health and project offline readiness:
 
 ```bash
 packvault doctor
+packvault doctor --project ./my-app
+packvault doctor --fix
 ```
 
 Create and install cached template dependencies in one step:
@@ -203,30 +225,158 @@ PackVault stores durable state under:
   bundles/
   database/
   exports/
+  config.json
 ```
+
+## Configuration
+
+### Per-project: `packvault.config.js`
+
+```js
+export default {
+  bundle: 'frontend',
+  packages: ['react', 'vite@5', 'tailwindcss', 'zustand'],
+  registry: 'https://registry.npmjs.org',
+  concurrency: 8,
+};
+```
+
+Scaffold with `packvault init`.
+
+### Global: `~/.packvault/config.json`
+
+Stores schedule settings, registry tokens, scoped registry mappings, trusted peer tokens, and allow/block policy.
 
 ## Commands
 
-### `packvault sync <packages...>`
+### `packvault sync [packages...]`
 
-Downloads package metadata from the npm registry, resolves requested versions, downloads tarballs, stores them locally, and records metadata in SQLite.
+Downloads package metadata and tarballs. Flags:
 
-Package specs can be plain names or exact versions:
+- `--from-lockfile [path]` — sync all pinned versions from a lockfile
+- `--no-dependencies` — cache only requested roots
+- `--concurrency <n>` — parallel downloads (default 5, max 20)
+- `--registry <url>` / `--token <token>` — private registry auth
+
+### `packvault install [package]`
+
+Installs cached packages with SemVer range resolution. Flags:
+
+- `--from-package-json` — install all deps from `package.json`
+- `-v, --version <version>` — exact version
+- `-d, --directory <path>` — target project
+
+### `packvault bundle`
+
+Manage and sync bundles:
 
 ```bash
-packvault sync react vite@latest express@4.18.3
+packvault bundle save my-stack react vite tailwindcss
+packvault bundle list
+packvault bundle delete my-stack
+packvault bundle frontend
+packvault bundle --concurrency 8
 ```
 
-### `packvault install <package>`
+Built-in bundles: `frontend`, `backend`, `fullstack`, `frameworks`.
 
-Installs a cached package and its cached runtime dependency tree into the current project's `node_modules`. This command does not require internet access.
+### `packvault serve` / `packvault share`
+
+Smart proxy registry with offline fallback. Flags: `--port`, `--token`.
 
 ```bash
-packvault install react
-packvault install express --version 4.18.3
+packvault serve
+npm config set registry http://localhost:4873
 ```
 
-### `packvault create <template> [project-name]`
+Web UI: `http://localhost:4873/ui`
+
+### `packvault connect [ip]`
+
+Import packages from a peer. Flags: `--port`, `--token`, `--bidirectional`.
+
+With no IP, opens an interactive picker from mDNS discovery.
+
+### `packvault discover`
+
+Scan LAN for PackVault nodes via mDNS.
+
+### `packvault doctor`
+
+Vault health report with bundle breakdown, orphan detection, and `--fix`. Use `--project [path]` for per-project offline readiness.
+
+### `packvault search [query]`
+
+Search cached packages. Flags: `--all`, `--versions`.
+
+### `packvault prune`
+
+Remove unused packages. Flags: `--older-than 90d`, `--keep-latest`, `--dry-run`.
+
+### `packvault export` / `packvault import`
+
+```bash
+packvault export -o my-vault.tar.gz
+packvault export --bundle frontend -o frontend.tar.gz
+packvault export --packages react,vite -o subset.tar.gz
+packvault import my-vault.tar.gz
+```
+
+### `packvault log`
+
+View audit log. Flags: `--last 50`, `--action sync`, `--clear`.
+
+### `packvault audit`
+
+Offline vulnerability report. Flags: `--project ./my-app`, `--fix`.
+
+### `packvault policy`
+
+```bash
+packvault policy allow react vite
+packvault policy block lodash
+packvault policy list
+packvault policy clear
+```
+
+### `packvault diff`
+
+Show vault changes. Flags: `--since 7d`, `--bundle frontend`.
+
+### `packvault schedule`
+
+```bash
+packvault schedule --every 24h
+packvault schedule --status
+packvault schedule --disable
+```
+
+### `packvault snapshot`
+
+```bash
+packvault snapshot --project ./my-app -o my-app.vault
+packvault snapshot restore my-app.vault
+```
+
+### `packvault classroom`
+
+```bash
+packvault classroom --host
+packvault classroom --join
+```
+
+### `packvault completion`
+
+```bash
+packvault completion --shell bash >> ~/.bashrc
+packvault completion --shell zsh >> ~/.zshrc
+```
+
+### `packvault init`
+
+Scaffold `packvault.config.js` in the current directory.
+
+### `packvault create [template] [project-name]`
 
 Creates a project from a local template and replaces `__PROJECT_NAME__` tokens.
 
@@ -257,68 +407,20 @@ Available templates:
 - `nest-api`
 - `node-ts`
 
-### `packvault doctor`
+### `packvault doctor` (global)
 
-Reports vault health, cached package count, storage usage, and bundle coverage.
+Reports vault health, storage breakdown by bundle, oldest/newest packages, and orphan detection.
 
-Example:
+### `packvault bundle <name>` (legacy)
 
-```text
-React          Cached
-Vite           Cached
-Nextjs         Missing
+Syncs a predefined bundle — see `packvault bundle` subcommands above.
 
-Packages: 2
-Storage: 14 MB
-Vault Health: 80%
-```
+## Security
 
-### `packvault bundle <name>`
-
-Syncs a predefined bundle.
-
-- `frontend`: react, react-dom, vite, tailwindcss, eslint, prettier
-- `backend`: express, prisma, dotenv
-- `fullstack`: react, vite, express, prisma
-- `frameworks`: popular frontend, meta-framework, and API framework packages
-
-### `packvault serve`
-
-Starts a local Express registry server on port `4873` by default and prints local LAN addresses.
-
-```bash
-packvault serve --port 4873
-```
-
-### `packvault share`
-
-Shares your cached packages with nearby machines on the same Wi-Fi/LAN. This does not require internet access after packages are cached.
-
-On the machine with cached packages:
-
-```bash
-packvault share
-```
-
-On another machine connected to the same LAN:
-
-```bash
-packvault connect <your-ip>
-```
-
-You can also point npm at the PackVault server for cached package metadata:
-
-```bash
-npm install react --registry http://localhost:4873
-```
-
-### `packvault connect <ip>`
-
-Connects to another PackVault server, lists available cached packages, downloads missing tarballs, and records the peer.
-
-```bash
-packvault connect 192.168.1.25 --port 4873
-```
+- **Integrity verification**: Every tarball is verified against npm `dist.integrity` or `dist.shasum` on sync. Re-verified before every install.
+- **Offline audit**: Security advisories fetched at sync time and queryable offline via `packvault audit`.
+- **Policy**: Allowlist/blocklist enforced at sync and install time.
+- **Peer auth**: Optional `--token` on `serve`/`share`/`connect`.
 
 ## Database Schema
 
@@ -328,21 +430,38 @@ CREATE TABLE packages (
   version TEXT NOT NULL,
   size INTEGER NOT NULL,
   cache_path TEXT NOT NULL,
+  dependencies TEXT NOT NULL DEFAULT '{}',
+  dist_tarball TEXT,
+  integrity TEXT,
+  shasum TEXT,
+  accessed_at TEXT,
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (name, version)
 );
 
-CREATE TABLE bundles (
-  name TEXT PRIMARY KEY,
-  packages TEXT NOT NULL
+CREATE TABLE bundles (name TEXT PRIMARY KEY, packages TEXT NOT NULL);
+CREATE TABLE peers (ip TEXT PRIMARY KEY, hostname TEXT NOT NULL, last_seen TEXT NOT NULL);
+CREATE TABLE schema_version (version INTEGER PRIMARY KEY);
+
+CREATE TABLE logs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  action TEXT NOT NULL,
+  detail TEXT,
+  source TEXT,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE peers (
-  ip TEXT PRIMARY KEY,
-  hostname TEXT NOT NULL,
-  last_seen TEXT NOT NULL
+CREATE TABLE advisories (
+  package_name TEXT NOT NULL,
+  version_range TEXT NOT NULL,
+  severity TEXT NOT NULL,
+  title TEXT NOT NULL,
+  url TEXT,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 ```
+
+Migrations run automatically on startup (v1→v5).
 
 ## Architecture
 

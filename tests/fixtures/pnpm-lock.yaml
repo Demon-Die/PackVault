@@ -1,0 +1,14 @@
+lockfileVersion: '6.0'
+
+importers:
+  .:
+    dependencies:
+      semver:
+        specifier: ^7.5.0
+        version: 7.6.3
+
+packages:
+  /semver@7.6.3:
+    resolution: {integrity: sha512-test==}
+    engines: {node: '>=10'}
+    hasBin: true

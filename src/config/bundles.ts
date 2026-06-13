@@ -1,5 +1,7 @@
 import type { BundleDefinition } from "../types/index.js";
 
+export const builtInBundleNames = new Set(["frontend", "backend", "fullstack", "frameworks"]);
+
 export const builtInBundles: BundleDefinition[] = [
   {
     name: "frontend",
