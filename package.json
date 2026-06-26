@@ -1,6 +1,6 @@
 {
   "name": "packvault",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Offline-first package caching and distribution CLI for JavaScript developers.",
   "type": "module",
   "homepage": "https://github.com/Demon-Die/PackVault#readme",
