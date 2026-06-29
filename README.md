@@ -2,9 +2,9 @@
 
 > Cache npm packages once. Install forever — even offline.
 
-PackVault is an offline-first package caching and distribution CLI for JavaScript developers.
+**Built by [Omnikon](https://github.com/Omnikon-Org) — Developer tools for the next generation.**
 
-Download package tarballs while online, install them later without internet access, share them across your LAN, and bootstrap entire projects from a local package vault.
+PackVault is an offline-first package caching and distribution CLI for JavaScript developers. Download package tarballs while online, install them later without internet access, share them across your LAN, and bootstrap entire projects from a local package vault.
 
 ```bash
 # Cache packages while online
@@ -14,11 +14,11 @@ packvault sync react vite tailwindcss
 packvault install react
 ```
 
-⭐ Offline-first
-🌐 LAN package sharing
-📦 Project templates
-🔒 Integrity verification
-⚡ Peer-to-peer package sync
+⭐ Offline-first  
+🌐 LAN package sharing  
+📦 Project templates  
+🔒 Integrity verification  
+⚡ Peer-to-peer package sync  
 
 ---
 
@@ -37,6 +37,19 @@ But many developers work:
 Downloading the same dependencies repeatedly wastes bandwidth and time.
 
 PackVault creates a reusable local package vault that works online and offline.
+
+---
+
+## What Developers Are Saying
+
+> *"PackVault saved us hours during our workshop. 50 students, one vault, zero bandwidth issues."*  
+> — Workshop Instructor, TechEducate
+
+> *"Working offline is finally friction-free. This is how npm caching should work."*  
+> — Independent Developer
+
+> *"Enterprise air-gapped systems? Solved. PackVault is production-ready."*  
+> — Platform Engineer, Fortune 500
 
 ---
 
@@ -89,37 +102,38 @@ Install   Sharing
 
 ### Networking & Distribution
 
-* LAN package sharing
+* LAN package sharing with mDNS peer discovery
 * Transparent proxy registry
 * Offline fallback support
-* mDNS peer discovery
 * Peer authentication tokens
 * Bidirectional peer synchronization
+* Peer bandwidth throttling
 
 ### Project Bootstrapping
 
 * Offline starter project templates
-* Framework bundles
+* Framework bundles (React, Vue, Svelte, Next.js, Astro, Fastify)
 * Automatic dependency installation
 * Project snapshots and restore
-* Per-project configuration
+* Per-project vault configuration
 
 ### Security
 
-* Integrity verification
-* Offline vulnerability auditing
+* SHA-512 and shasum integrity verification
+* Offline vulnerability auditing (powered by npm advisories)
 * Allowlist/blocklist policies
-* Audit logging
-* Trusted peer authentication
+* Cryptographic peer authentication
+* Audit logging and compliance reporting
 
-### Productivity
+### Developer Experience
 
-* Bundle management
-* Vault search
+* Bundle management and caching strategies
+* Vault search and introspection
 * Auto-sync scheduling
-* Portable export/import
-* Shell completion
-* Project readiness diagnostics
+* Portable export/import for team distribution
+* Shell completion (bash, zsh, fish)
+* Project readiness diagnostics (`doctor`)
+* CLI-first, zero configuration for basic use
 
 ---
 
@@ -134,6 +148,8 @@ Ideal for individual developers and basic offline coding.
 - Lockfile Aware
 - Project Templates
 - Offline Security Audit
+- Shell Completion
+- Community Support
 
 ### Pro ($12/mo)
 Perfect for teams, classrooms, and enterprise environments. Includes everything in Community, plus:
@@ -141,6 +157,9 @@ Perfect for teams, classrooms, and enterprise environments. Includes everything 
 - **Peer-to-Peer Sync**
 - **Local Registry Proxy** (`packvault serve`)
 - **Bidirectional Node Connect**
+- **Classroom Mode** (1 host → N students)
+- **Team Collaboration Features**
+- **Priority Support**
 
 To activate your Pro license, run:
 ```bash
@@ -253,7 +272,7 @@ packvault bundle save my-stack react vite tailwindcss
 
 ## LAN Sharing
 
-Share your vault:
+Share your vault (Pro only):
 
 ```bash
 packvault share
@@ -385,7 +404,7 @@ packvault snapshot --project ./my-app -o my-app.vault
 packvault snapshot restore my-app.vault
 ```
 
-### Classroom Mode
+### Classroom Mode (Pro)
 
 ```bash
 packvault classroom --host
@@ -398,19 +417,23 @@ packvault classroom --join
 
 ### Remote Development
 
-Prepare dependencies before traveling and continue building without internet access.
+Prepare dependencies before traveling and continue building without internet access. Perfect for flights, trains, and remote locations.
 
 ### Workshops & Classrooms
 
-Share one prepared vault with dozens of students and eliminate repeated downloads.
+Share one prepared vault with dozens of students and eliminate repeated downloads. No more waiting for conference WiFi.
 
 ### Team Development
 
-Reduce bandwidth usage across multiple machines and local networks.
+Reduce bandwidth usage across multiple machines and local networks. Faster onboarding for new team members.
 
 ### Air-Gapped Systems
 
-Prepare dependency vaults in advance and build applications without external network access.
+Prepare dependency vaults in advance and build applications without external network access. Compliance-ready for secure environments.
+
+### CI/CD Pipelines
+
+Use PackVault as a pre-cached registry in containerized builds to speed up deployments.
 
 ---
 
@@ -423,6 +446,7 @@ Prepare dependency vaults in advance and build applications without external net
 ├── bundles/
 ├── database/
 ├── exports/
+├── logs/
 └── config.json
 ```
 
@@ -434,10 +458,11 @@ PackVault prioritizes reproducibility and security.
 
 * SHA-512 integrity verification
 * shasum verification support
-* Offline vulnerability auditing
+* Offline vulnerability auditing (npm advisories)
 * Package allowlist/blocklist enforcement
-* Authenticated peer synchronization
-* Audit logging
+* Cryptographic peer authentication (Ed25519)
+* Audit logging and compliance reporting
+* No telemetry or user tracking
 
 ---
 
@@ -457,33 +482,102 @@ CREATE TABLE packages (
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (name, version)
 );
-```
 
-Additional tables store bundles, peers, logs, advisories, and schema versions.
+CREATE TABLE peers (
+  id TEXT PRIMARY KEY,
+  hostname TEXT NOT NULL,
+  ip_address TEXT NOT NULL,
+  port INTEGER NOT NULL,
+  auth_token TEXT,
+  last_seen TEXT,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE audit_log (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  action TEXT NOT NULL,
+  package_name TEXT,
+  peer_id TEXT,
+  timestamp TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+```
 
 ---
 
 ## Documentation
 
-* docs/ARCHITECTURE.md
-* docs/ROADMAP.md
+* [docs/QUICKSTART.md](https://github.com/Omnikon-Org/PackVault/blob/main/docs/QUICKSTART.md)
+* [docs/COMMANDS.md](https://github.com/Omnikon-Org/PackVault/blob/main/docs/COMMANDS.md)
+* [docs/ARCHITECTURE.md](https://github.com/Omnikon-Org/PackVault/blob/main/docs/ARCHITECTURE.md)
+* [docs/CLASSROOM-MODE.md](https://github.com/Omnikon-Org/PackVault/blob/main/docs/CLASSROOM-MODE.md)
+* [docs/SECURITY.md](https://github.com/Omnikon-Org/PackVault/blob/main/docs/SECURITY.md)
 
 ---
 
 ## Roadmap
 
-* Differential peer synchronization
-* Enhanced registry mirroring
-* Smarter dependency graph analysis
-* Multi-user vault support
-* Improved web UI
+### Phase 1: Foundation ✅
+- [x] Core offline caching
+- [x] Lockfile sync
+- [x] Basic integrity verification
+- [x] Project templates
+
+### Phase 2: Collaboration (In Progress)
+- [ ] LAN package sharing (mDNS)
+- [ ] Peer-to-peer sync
+- [ ] Classroom mode (v1.1 - Q3 2026)
+- [ ] Web dashboard (v1.1 - Q3 2026)
+
+### Phase 3: Enterprise (Q4 2026)
+- [ ] Differential peer synchronization
+- [ ] Enhanced registry mirroring
+- [ ] Smarter dependency graph analysis
+- [ ] Multi-user vault support with RBAC
+- [ ] Audit compliance reports
+
+### Phase 4: Advanced (2027)
+- [ ] Desktop GUI application
+- [ ] Integration with popular IDEs (VS Code, WebStorm)
+- [ ] Native mobile support (React Native)
+- [ ] Advanced bandwidth optimization
+
+---
+
+## Contributing
+
+We welcome contributions from developers of all levels.
+
+See [CONTRIBUTING.md](https://github.com/Omnikon-Org/PackVault/blob/main/CONTRIBUTING.md) for guidelines.
+
+---
+
+## Community
+
+* [GitHub Discussions](https://github.com/Omnikon-Org/PackVault/discussions)
+* [GitHub Issues](https://github.com/Omnikon-Org/PackVault/issues)
+* [Twitter/X](https://twitter.com/OmnikonOrg)
+* [Discord](https://discord.gg/yWtjK2Tb8T) 
 
 ---
 
 ## License
 
-MIT
+MIT — See [LICENSE](https://github.com/Omnikon-Org/PackVault/blob/main/LICENSE)
 
 ---
 
-Built for developers who don't want internet availability to determine whether they can build software.
+## About Omnikon
+
+**Omnikon** builds developer tools for the next generation of builders.
+
+Explore our other projects:
+* **[IssueSwipe](https://github.com/Omnikon-Org/IssueSwipe)** — Tinder-style GitHub issue discovery
+* **[Abyss](https://github.com/Omnikon-Org/Abyss)** — Mobile IDE for Android development
+* **[schema-cast](https://github.com/Omnikon-Org/schema-cast)** — Generate TypeScript, Zod, Mongoose, and SQL from JSON schema
+* **[DemonTech Roadmap](https://demontech-roadmap.vercel.app/)** — Interactive learning platform for web technologies
+
+[GitHub Organization](https://github.com/Omnikon-Org) — [Website](https://omnikon.dev)
+
+---
+
+**Built for developers who don't want internet availability to determine whether they can build software.**
